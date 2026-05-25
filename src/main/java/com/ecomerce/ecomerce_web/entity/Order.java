@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 @Data
 @NoArgsConstructor
@@ -22,7 +23,7 @@ public class Order {
     @Enumerated(EnumType.STRING)
     private Status status;
     @OneToMany(mappedBy = "order",cascade = CascadeType.ALL)
-    private List<OrderItem>orderItems;
+    private List<OrderItem>orderItems = new ArrayList<>();
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id",nullable = false)
     private User user;
