@@ -6,17 +6,19 @@ import com.ecomerce.ecomerce_web.services.ProductService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/products/")
+@RequestMapping("/api/products")
 @AllArgsConstructor
 public class ProductController {
     final private ProductService productService;
 
-    @PostMapping("createProduct")
+    @PostMapping("/createProduct")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductResponseDto>createProduct(
 
             @RequestBody @Valid ProductRequestDto productDto
@@ -24,7 +26,8 @@ public class ProductController {
         ProductResponseDto response = productService.createProduct(productDto);
         return ResponseEntity.ok(response);
     }
-    @PostMapping("updateProduct/{id}")
+    @PutMapping("/updateProduct/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductResponseDto>updateProduct(
             @PathVariable Long id
             ,@RequestBody @Valid
@@ -33,19 +36,20 @@ public class ProductController {
         ProductResponseDto response =  productService.updateProduct(productDto,id);
         return ResponseEntity.ok(response);
     }
-    @GetMapping("AllProducts")
+    @GetMapping("/AllProducts")
     public ResponseEntity<List<ProductResponseDto>>displayAll(){
         List<ProductResponseDto>responses = productService.getAll();
         return ResponseEntity.ok(responses);
     }
-    @GetMapping("{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<ProductResponseDto>getById(
             @PathVariable Long id
     ){
         ProductResponseDto response = productService.getById(id);
         return ResponseEntity.ok(response);
     }
-    @DeleteMapping("delete/{id}")
+    @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String>delete(
             @PathVariable Long id
     ){

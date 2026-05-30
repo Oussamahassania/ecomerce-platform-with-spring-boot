@@ -6,23 +6,26 @@ import com.ecomerce.ecomerce_web.services.UserService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @AllArgsConstructor
 @RestController
-@RequestMapping("/api/users/")
+@RequestMapping("/api/users")
 public class UserController {
     final private UserService userService;
-    @PostMapping("create")
+    @PostMapping("/create")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponseDto> createUser(
            @RequestBody @Valid UserRequestDto userDto
     ){
         UserResponseDto response =  userService.createUser(userDto);
         return ResponseEntity.ok(response);
     }
-    @PostMapping("update/{id}")
+    @PutMapping("/update/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponseDto> updateUserInfo(
             @PathVariable  Long id,
             @RequestBody @Valid UserRequestDto userDto){
@@ -30,17 +33,20 @@ public class UserController {
         return  ResponseEntity.ok(response);
     }
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponseDto>displayById(
             @PathVariable Long id){
         UserResponseDto userResponseDto = userService.getById(id);
         return ResponseEntity.ok(userResponseDto);
     }
     @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserResponseDto>>displayAll(){
         List<UserResponseDto>responses = userService.getAllUsers();
         return ResponseEntity.ok(responses);
     }
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String>delete(
             @PathVariable Long id){
         userService.deleteUser(id);

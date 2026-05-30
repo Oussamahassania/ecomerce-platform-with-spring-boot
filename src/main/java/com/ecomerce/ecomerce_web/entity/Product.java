@@ -25,4 +25,7 @@ public class Product {
     private LocalDateTime createdAt;
     @OneToMany(mappedBy = "product")
     private List<OrderItem>orderItems;
+    @Column(nullable = false)
+    private boolean active = true;
+
 }

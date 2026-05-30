@@ -9,6 +9,7 @@ import com.ecomerce.ecomerce_web.repository.OrderRepository;
 import com.ecomerce.ecomerce_web.repository.ProductRepository;
 import com.ecomerce.ecomerce_web.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -20,11 +21,22 @@ public class OrderService {
     final private OrderRepository orderRepository;
     final private ProductRepository productRepository;
     final private UserRepository userRepository;
-    public OrderResponseDto createOrder(OrderRequestDto dto){
-        User user = userRepository.findById(dto.getUserId())
-                .orElseThrow(() -> new RuntimeException(
-                "User Not found"
-        ));
+    public OrderResponseDto createOrder(OrderRequestDto dto, UserDetails userDetails){
+        boolean isAdmin = userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        User user;
+
+        if (isAdmin && dto.getUserId() != null) {
+            // ✅ Admin can specify any userId
+            user = userRepository.findById(dto.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User Not Found"));
+        } else {
+            // ✅ getUsername() returns email in your User entity
+            user = userRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User Not Found"));
+        }
+
         Order order = new Order();
         order.setUser(user);
         BigDecimal total = BigDecimal.ZERO;
@@ -59,9 +71,18 @@ public class OrderService {
                  .stream()
                  .map(this::toDto).toList();
     }
-    public OrderResponseDto getOrderById(Long id){
+    public OrderResponseDto getOrderById(Long id, UserDetails userDetails) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Order Not Found"));
+
+        boolean isAdmin = userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        // if not admin, check if the order belongs to the logged-in user
+        if (!isAdmin && !order.getUser().getUsername().equals(userDetails.getUsername())) {
+            throw new RuntimeException("Access Denied: This order does not belong to you");
+        }
+
         return toDto(order);
     }
     public OrderResponseDto updateOrderStatus(Long orderId,Status status){
@@ -70,15 +91,22 @@ public class OrderService {
         order.setStatus(status);
         return toDto(orderRepository.save(order));
     }
-    public OrderResponseDto cancelOrder(Long orderId){
+    public OrderResponseDto cancelOrder(Long orderId, UserDetails userDetails) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order Not Found"));
-        if(order.getStatus() == Status.CANCELLED){
-            throw new RuntimeException(
-                    "Order is Already canceled"
-            );
+
+        boolean isAdmin = userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        // check ownership
+        if (!isAdmin && !order.getUser().getEmail().equals(userDetails.getUsername())) {
+            throw new RuntimeException("Access Denied: This order does not belong to you");
         }
-        for (OrderItem item : order.getOrderItems()){
+
+        if (order.getStatus() == Status.CANCELLED)
+            throw new RuntimeException("Order is Already canceled");
+
+        for (OrderItem item : order.getOrderItems()) {
             Product product = item.getProduct();
             product.setStock(product.getStock() + item.getQuantity());
             productRepository.save(product);

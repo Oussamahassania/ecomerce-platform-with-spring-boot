@@ -7,6 +7,7 @@ import com.ecomerce.ecomerce_web.entity.User;
 import com.ecomerce.ecomerce_web.repository.RoleRepository;
 import com.ecomerce.ecomerce_web.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ import java.util.List;
 public class UserService {
     final private UserRepository userRepository;
     final private RoleRepository roleRepository;
+    final private PasswordEncoder passwordEncoder;
     // creating new role with specific role
     public UserResponseDto createUser(UserRequestDto userDto){
         Role role = roleRepository.findByName("USER")
@@ -33,7 +35,7 @@ public class UserService {
         user.setFullName(userDto.getFullName());
         user.setEmail(userDto.getEmail());
         user.setDateOfBirth(userDto.getDateOfBirth());
-        user.setPassword(userDto.getPassword());
+        user.setPassword(passwordEncoder.encode(userDto.getPassword()));
         User userUpdated = userRepository.save(user);
         return toDto(userUpdated);
     }

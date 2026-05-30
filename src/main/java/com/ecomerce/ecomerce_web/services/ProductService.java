@@ -31,9 +31,8 @@ public class ProductService {
         Product updatedProduct = productRepository.save(product);
         return toDto(updatedProduct);
     }
-    public List<ProductResponseDto>getAll(){
-        return productRepository
-                .findAll()
+    public List<ProductResponseDto> getAll() {
+        return productRepository.findByActiveTrue()
                 .stream()
                 .map(this::toDto)
                 .toList();
@@ -44,7 +43,10 @@ public class ProductService {
         return toDto(product);
     }
     public void delete(Long id){
-        productRepository.deleteById(id);
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+        product.setActive(false);
+        productRepository.save(product);
     }
 
     public Product toEntity(ProductRequestDto productDto){
