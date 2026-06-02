@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body style="font-family: Arial, sans-serif; background:#f4f4f4; padding: 20px;">
+<div style="max-width:600px; margin:auto; background:white; border-radius:8px; padding:30px;">
+
+    <h2 style="color:#2c3e50;">Order Status Updated 📦</h2>
+    <p>Hi <strong th:text="${fullName}"></strong>,</p>
+    <p>Your order <strong th:text="'#' + ${orderId}"></strong> status has been updated to:</p>
+
+    <div style="font-size:24px; font-weight:bold; color:#3498db; margin:20px 0;"
+         th:text="${status}"></div>
+
+    <p th:if="${status == 'SHIPPED'}">🚚 Your order is on its way!</p>
+    <p th:if="${status == 'DELIVERED'}">✅ Your order has been delivered!</p>
+    <p th:if="${status == 'PENDING'}">⏳ Your order is being processed.</p>
+
+    <p style="color:#999; font-size:12px;">Thank you for shopping with us!</p>
+</div>
+</body>
+</html>

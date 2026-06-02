@@ -1,7 +1,6 @@
 package com.ecomerce.ecomerce_web.services;
 
 import com.ecomerce.ecomerce_web.dtos.OrderItemRequestDto;
-import com.ecomerce.ecomerce_web.dtos.OrderItemsResponseDto;
 import com.ecomerce.ecomerce_web.dtos.OrderRequestDto;
 import com.ecomerce.ecomerce_web.dtos.OrderResponseDto;
 import com.ecomerce.ecomerce_web.entity.*;
@@ -23,6 +22,7 @@ public class OrderService {
     final private ProductRepository productRepository;
     final private UserRepository userRepository;
     private final OrderMapper orderMapper;
+    private final  EmailService emailService;
     public OrderResponseDto createOrder(OrderRequestDto dto, UserDetails userDetails){
         boolean isAdmin = userDetails.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
@@ -30,11 +30,9 @@ public class OrderService {
         User user;
 
         if (isAdmin && dto.getUserId() != null) {
-            // ✅ Admin can specify any userId
             user = userRepository.findById(dto.getUserId())
                     .orElseThrow(() -> new RuntimeException("User Not Found"));
         } else {
-            // ✅ getUsername() returns email in your User entity
             user = userRepository.findByEmail(userDetails.getUsername())
                     .orElseThrow(() -> new RuntimeException("User Not Found"));
         }
@@ -60,7 +58,15 @@ public class OrderService {
             total = total.add(product.getPrice().multiply(BigDecimal.valueOf(itemDto.getQuantity())));
         }
         order.setTotalAmount(total);
-        return orderMapper.toDto(orderRepository.save(order));
+        OrderResponseDto response =  orderMapper.toDto(orderRepository.save(order));
+        emailService.sendOrderConfirmation(
+                user.getEmail(),
+                user.getFullName(),
+                response.getId(),
+                response.getItems(),
+                response.getTotalAmount()
+        );
+        return response;
     }
     public List<OrderResponseDto>getAllOrders(){
         return  orderRepository.findAll()
@@ -91,7 +97,14 @@ public class OrderService {
         Order order  =  orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order Not Found"));
         order.setStatus(status);
-        return orderMapper.toDto(orderRepository.save(order));
+        OrderResponseDto response =  orderMapper.toDto(orderRepository.save(order));
+        emailService.sendOrderStatusUpdate(
+                order.getUser().getEmail(),
+                order.getUser().getFullName(),
+                orderId,
+                status.name()
+        );
+        return response;
     }
     public OrderResponseDto cancelOrder(Long orderId, UserDetails userDetails) {
         Order order = orderRepository.findById(orderId)
@@ -114,7 +127,14 @@ public class OrderService {
             productRepository.save(product);
         }
         order.setStatus(Status.CANCELLED);
-        return orderMapper.toDto(orderRepository.save(order));
+        OrderResponseDto response = orderMapper.toDto(orderRepository.save(order));
+
+        emailService.sendOrderCancellation(
+                order.getUser().getEmail(),
+                order.getUser().getFullName(),
+                orderId
+        );
+        return response;
     }
     public void deleteOrder(Long orderId){
         Order order = orderRepository.findById(orderId)

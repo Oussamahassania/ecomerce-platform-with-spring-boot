@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Locale;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -25,31 +26,57 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private  final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
+    private final EmailService emailService;
 
+    public String register(RegisterRequest request){
 
+        if (userRepository.findByEmail(request.getEmail()).isPresent())
+            throw new RuntimeException("Email already in use");
 
-    public AuthResponse register(RegisterRequest request){
         Role userRole  = roleRepository.findByName("USER")
                 .orElseThrow(() -> new RuntimeException("Role Not Found In Db"));
-      User user  = User.builder()
+        String token_gen = UUID.randomUUID().toString();
+        User user  = User.builder()
               .fullName(request.getFullName())
               .email(request.getEmail())
               .password(passwordEncoder.encode(request.getPassword()))
               .role(userRole)
+                .emailVerified(false)
+                .verificationToken(token_gen)
               .dateOfBirth(request.getDateOfBirth())
               .build();
       userRepository.save(user);
-      String token = jwtUtils.generateToken(user);
-      return new AuthResponse(token,null);
 
+      emailService.sendVerificationEmail(
+              user.getEmail(),
+              user.getFullName(),
+              user.getVerificationToken()
+      );
+
+        return "Registration successful! Please check your email to verify your account.";
     }
     public AuthResponse login(LoginRequest request){
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("User Not Found"));
+        if (!user.isEmailVerified())
+            throw new RuntimeException("Please verify your email before logging in");
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword())
+                new UsernamePasswordAuthenticationToken(
+                        request.getEmail(),
+                        request.getPassword()
+                )
         );
-        User user =  userRepository.findByEmail(request.getEmail()).
-                orElseThrow(() -> new RuntimeException("User Not Found"));
-        String token = jwtUtils.generateToken(user);
+        String token  = jwtUtils.generateToken(user);
         return new AuthResponse(token,null);
+    }
+    public String verifyEmail(String token){
+        User user = userRepository.findByVerificationToken(token)
+                .orElseThrow(() -> new RuntimeException("Invalid or expired verification token"));
+        user.setEmailVerified(true);
+        user.setVerificationToken(null);
+        userRepository.save(user);
+
+        return "Email verified successfully! You can now login.";
+
     }
 }

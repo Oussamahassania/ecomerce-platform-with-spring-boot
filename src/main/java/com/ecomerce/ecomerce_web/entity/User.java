@@ -62,9 +62,14 @@ public class User implements UserDetails {
     public boolean isCredentialsNonExpired() {
         return true;
     }
-
+    @Column(name = "email_verified", nullable = false, columnDefinition = "boolean default false")
+    private boolean emailVerified = false;
+    private String verificationToken;
     @Override
     public boolean isEnabled() {
-        return true;
+        return emailVerified;
     }
+
+
+
 }
