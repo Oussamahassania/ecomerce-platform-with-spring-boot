@@ -4,9 +4,12 @@ import com.ecomerce.ecomerce_web.dtos.OrderItemsResponseDto;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
@@ -16,21 +19,29 @@ import java.util.List;
 
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
 public class EmailService {
     private final JavaMailSender javaMailSender;
     private final TemplateEngine templateEngine;
+    @Value("${app.base-url}")
+    private String baseUrl;
 
+
+    @Async("emailExecuter")
     public void sendVerificationEmail(String to,String fullName,String token){
         Context context = new Context();
         context.setVariable("fullName",fullName);
-        context.setVariable("verificationUrl","http://localhost:8080/api/auth/verifiy?token=" + token);
+        context.setVariable(
+                "verificationUrl",
+                baseUrl + "/api/auth/verifiy?token=" + token
+        );
 
         sendEmail(to," Verify Your Email — EcommerceWeb",
                 "emails/welcome", context);
     }
-     public void sendOrderConfirmation(String to, String fullName, Long orderId,
+    @Async("emailExecuter")
+    public void sendOrderConfirmation(String to, String fullName, Long orderId,
                                        List<OrderItemsResponseDto> items,
                                        BigDecimal totalAmount){
         Context context = new Context();
@@ -43,7 +54,8 @@ public class EmailService {
                  "emails/order-confirmation", context);
 
      }
-     public void sendOrderStatusUpdate(
+    @Async("emailExecuter")
+    public void sendOrderStatusUpdate(
              String to, String fullName,
              Long orderId,String status){
         Context context = new Context();
@@ -54,7 +66,8 @@ public class EmailService {
          sendEmail(to, " Order #" + orderId + " Status Updated",
                  "emails/order-status", context);
      }
-     public void sendOrderCancellation(String to,String fullName,Long orderId){
+    @Async("emailExecuter")
+    public void sendOrderCancellation(String to,String fullName,Long orderId){
         Context context = new Context();
         context.setVariable("fullName",fullName);
         context.setVariable("orderId",orderId);
@@ -66,6 +79,10 @@ public class EmailService {
             String to, String subject,
             String template, Context context)
     {
+        log.info(
+                "Thread: {}",
+                Thread.currentThread().getName()
+        );
 
         try {
          String html = templateEngine.process(template,context);
