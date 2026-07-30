@@ -4,6 +4,7 @@ import com.ecomerce.ecomerce_web.dtos.UserRequestDto;
 import com.ecomerce.ecomerce_web.dtos.UserResponseDto;
 import com.ecomerce.ecomerce_web.entity.Role;
 import com.ecomerce.ecomerce_web.entity.User;
+import com.ecomerce.ecomerce_web.exception.ResourceNotFoundException;
 import com.ecomerce.ecomerce_web.mapper.UserMapper;
 import com.ecomerce.ecomerce_web.repository.RoleRepository;
 import com.ecomerce.ecomerce_web.repository.UserRepository;
@@ -27,7 +28,7 @@ public class UserService {
     @CacheEvict(value = "users", allEntries = true)
     public UserResponseDto createUser(UserRequestDto userDto) {
         Role role = roleRepository.findByName("USER")
-                .orElseThrow(() -> new RuntimeException("Default role USER not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Default role USER not found"));
 
         User user = userMapper.toEntity(userDto, role);
         user.setPassword(passwordEncoder.encode(userDto.getPassword()));
@@ -39,7 +40,7 @@ public class UserService {
     })
     public UserResponseDto updateUser(Long id, UserRequestDto userDto) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User Not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User Not found"));
 
         userMapper.updateEntity(userDto, user);
         user.setPassword(passwordEncoder.encode(userDto.getPassword()));
@@ -48,7 +49,7 @@ public class UserService {
     @Cacheable(value = "user",key = "#id")
     public UserResponseDto getById(Long id) {
         return userMapper.toDto(userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User Not found")));
+                .orElseThrow(() -> new ResourceNotFoundException("User Not found")));
     }
     @Cacheable(value = "users")
     public List<UserResponseDto> getAllUsers() {

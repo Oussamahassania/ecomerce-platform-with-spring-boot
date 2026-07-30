@@ -3,6 +3,9 @@ package com.ecomerce.ecomerce_web.services;
 import com.ecomerce.ecomerce_web.dtos.OrderItemsResponseDto;
 import com.ecomerce.ecomerce_web.entity.OrderItem;
 import com.ecomerce.ecomerce_web.entity.Product;
+import com.ecomerce.ecomerce_web.exception.InvalidRequestException;
+import com.ecomerce.ecomerce_web.exception.ResourceNotFoundException;
+import com.ecomerce.ecomerce_web.exception.UnauthorizedActionException;
 import com.ecomerce.ecomerce_web.mapper.OrderItemMapper;
 import com.ecomerce.ecomerce_web.repository.OrderItemRepository;
 import lombok.AllArgsConstructor;
@@ -18,7 +21,7 @@ public class OrderItemService {
     public List<OrderItemsResponseDto> getItemsByOrderId(Long orderId, UserDetails userDetails) {
         List<OrderItem> items = orderItemRepository.findByOrderId(orderId);
         if (items.isEmpty())
-            throw new RuntimeException("No items found for this order");
+            throw new ResourceNotFoundException("No items found for this order");
 
         checkOwnership(items.get(0).getOrder().getUser().getEmail(), userDetails);  // ← clean
         return items.stream().map(orderItemMapper::toDto).toList();
@@ -26,7 +29,7 @@ public class OrderItemService {
 
     public OrderItemsResponseDto getOrderItemById(Long id, UserDetails userDetails) {
         OrderItem orderItem = orderItemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order Item Not Found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Order Item Not Found"));
 
         checkOwnership(orderItem.getOrder().getUser().getEmail(), userDetails);  // ← clean
         return orderItemMapper.toDto(orderItem);
@@ -34,14 +37,14 @@ public class OrderItemService {
 
     public OrderItemsResponseDto updateQuantity(Long id, Integer quantity, UserDetails userDetails) {
         OrderItem orderItem = orderItemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order Item Not Found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Order Item Not Found"));
 
         checkOwnership(orderItem.getOrder().getUser().getEmail(), userDetails);  // ← clean
 
         Product product = orderItem.getProduct();
         int diff = quantity - orderItem.getQuantity();
         if (product.getStock() < diff)
-            throw new RuntimeException("Stock Is Not Enough For " + product.getName());
+            throw new InvalidRequestException("Stock Is Not Enough For " + product.getName());
 
         product.setStock(product.getStock() - diff);
         orderItem.setQuantity(quantity);
@@ -51,7 +54,7 @@ public class OrderItemService {
 
     public void removeOrderItem(Long id, UserDetails userDetails) {
         OrderItem orderItem = orderItemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order Item Not Found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Order Item Not Found"));
 
         checkOwnership(orderItem.getOrder().getUser().getEmail(), userDetails);  // ← clean
 
@@ -64,6 +67,6 @@ public class OrderItemService {
         boolean isAdmin = userDetails.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         if (!isAdmin && !ownerEmail.equals(userDetails.getUsername()))
-            throw new RuntimeException("Access Denied: This order item does not belong to you");
+            throw new UnauthorizedActionException("Access Denied: This order item does not belong to you");
     }
 }

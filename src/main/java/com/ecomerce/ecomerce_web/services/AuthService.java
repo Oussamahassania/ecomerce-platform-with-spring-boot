@@ -5,17 +5,19 @@ import com.ecomerce.ecomerce_web.dtos.LoginRequest;
 import com.ecomerce.ecomerce_web.dtos.RegisterRequest;
 import com.ecomerce.ecomerce_web.entity.Role;
 import com.ecomerce.ecomerce_web.entity.User;
+import com.ecomerce.ecomerce_web.exception.DuplicateResourceException;
+import com.ecomerce.ecomerce_web.exception.InvalidRequestException;
+import com.ecomerce.ecomerce_web.exception.ResourceNotFoundException;
 import com.ecomerce.ecomerce_web.repository.RoleRepository;
 import com.ecomerce.ecomerce_web.repository.UserRepository;
 import com.ecomerce.ecomerce_web.security.JwtUtils;
-import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -31,10 +33,10 @@ public class AuthService {
     public String register(RegisterRequest request){
 
         if (userRepository.findByEmail(request.getEmail()).isPresent())
-            throw new RuntimeException("Email already in use");
+            throw new DuplicateResourceException("Email already in use");
 
         Role userRole  = roleRepository.findByName("USER")
-                .orElseThrow(() -> new RuntimeException("Role Not Found In Db"));
+                .orElseThrow(() -> new ResourceNotFoundException("Role Not Found In Db"));
         String token_gen = UUID.randomUUID().toString();
         User user  = User.builder()
               .fullName(request.getFullName())
@@ -57,9 +59,9 @@ public class AuthService {
     }
     public AuthResponse login(LoginRequest request){
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User Not Found"));
+                .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
         if (!user.isEmailVerified())
-            throw new RuntimeException("Please verify your email before logging in");
+            throw new BadCredentialsException("Please verify your email before logging in");
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
@@ -71,7 +73,8 @@ public class AuthService {
     }
     public String verifyEmail(String token){
         User user = userRepository.findByVerificationToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid or expired verification token"));
+                .orElseThrow(() -> new InvalidRequestException("Invalid or expired verification token") {
+                });
         user.setEmailVerified(true);
         user.setVerificationToken(null);
         userRepository.save(user);

@@ -4,6 +4,9 @@ import com.ecomerce.ecomerce_web.dtos.OrderItemRequestDto;
 import com.ecomerce.ecomerce_web.dtos.OrderRequestDto;
 import com.ecomerce.ecomerce_web.dtos.OrderResponseDto;
 import com.ecomerce.ecomerce_web.entity.*;
+import com.ecomerce.ecomerce_web.exception.InvalidRequestException;
+import com.ecomerce.ecomerce_web.exception.ResourceNotFoundException;
+import com.ecomerce.ecomerce_web.exception.UnauthorizedActionException;
 import com.ecomerce.ecomerce_web.mapper.OrderMapper;
 import com.ecomerce.ecomerce_web.repository.OrderRepository;
 import com.ecomerce.ecomerce_web.repository.ProductRepository;
@@ -31,21 +34,21 @@ public class OrderService {
 
         if (isAdmin && dto.getUserId() != null) {
             user = userRepository.findById(dto.getUserId())
-                    .orElseThrow(() -> new RuntimeException("User Not Found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("User Not Found"));
         } else {
             user = userRepository.findByEmail(userDetails.getUsername())
-                    .orElseThrow(() -> new RuntimeException("User Not Found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("User Not Found"));
         }
 
         Order order = new Order();
         order.setUser(user);
         BigDecimal total = BigDecimal.ZERO;
         for(OrderItemRequestDto itemDto : dto.getItems()){
-            Product product = productRepository.findById(itemDto.getProductId()).orElseThrow(() -> new RuntimeException(
+            Product product = productRepository.findById(itemDto.getProductId()).orElseThrow(() -> new ResourceNotFoundException(
                     "Product Not Found"
             ) );
             if (product.getStock() < itemDto.getQuantity())
-                throw new RuntimeException("Stock Is Not Enough For: " +product.getName());
+                throw new InvalidRequestException("Stock Is Not Enough For: " +product.getName());
 
             product.setStock(product.getStock() - itemDto.getQuantity());
             productRepository.save(product);
@@ -81,14 +84,14 @@ public class OrderService {
     }
     public OrderResponseDto getOrderById(Long id, UserDetails userDetails) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order Not Found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Order Not Found"));
 
         boolean isAdmin = userDetails.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
         // if not admin, check if the order belongs to the logged-in user
         if (!isAdmin && !order.getUser().getEmail().equals(userDetails.getUsername())) {
-            throw new RuntimeException("Access Denied: This order does not belong to you");
+            throw new UnauthorizedActionException("Access Denied: This order does not belong to you");
         }
 
         return orderMapper.toDto(order);
@@ -108,18 +111,18 @@ public class OrderService {
     }
     public OrderResponseDto cancelOrder(Long orderId, UserDetails userDetails) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order Not Found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Order Not Found"));
 
         boolean isAdmin = userDetails.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
         // check ownership
         if (!isAdmin && !order.getUser().getEmail().equals(userDetails.getUsername())) {
-            throw new RuntimeException("Access Denied: This order does not belong to you");
+            throw new UnauthorizedActionException("Access Denied: This order does not belong to you");
         }
 
         if (order.getStatus() == Status.CANCELLED)
-            throw new RuntimeException("Order is Already canceled");
+            throw new InvalidRequestException("Order is Already canceled");
 
         for (OrderItem item : order.getOrderItems()) {
             Product product = item.getProduct();
@@ -138,7 +141,7 @@ public class OrderService {
     }
     public void deleteOrder(Long orderId){
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order Not Found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Order Not Found"));
         orderRepository.delete(order);
     }
     public Long countOrders(){

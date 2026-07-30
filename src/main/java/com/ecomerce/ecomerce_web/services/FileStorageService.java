@@ -1,5 +1,7 @@
 package com.ecomerce.ecomerce_web.services;
 
+import com.ecomerce.ecomerce_web.exception.InvalidRequestException;
+import com.ecomerce.ecomerce_web.exception.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,14 +38,14 @@ public class FileStorageService {
 
     public String saveFile(MultipartFile file) throws IOException {
         if (file == null || file.isEmpty())
-            throw new RuntimeException("File is Empty");
+            throw new InvalidRequestException("File is Empty");
 
         if (file.getSize() > MAX_FILE_SIZE)
-            throw new RemoteException("File too large , max file size is 2MB");
+            throw new InvalidRequestException("File too large , max file size is 2MB");
 
         String originalFileName = file.getOriginalFilename();
         if (originalFileName == null || originalFileName.isBlank())
-            throw new RuntimeException("Invalid fileName");
+            throw new InvalidRequestException("Invalid fileName");
 
         String sanitizedFilename = Paths.get(originalFileName)
                 .getFileName()
@@ -51,22 +53,22 @@ public class FileStorageService {
                 .replaceAll("[^a-zA-Z0-9._-]", "");
 
         if (sanitizedFilename.contains("\0"))
-            throw new RemoteException("Invalid fileName");
+            throw new InvalidRequestException("Invalid fileName");
 
         String extension = getExtension(sanitizedFilename).toLowerCase();
         if (!ALLOWED_EXTENSIONS.contains(extension))
-            throw new RuntimeException("File type not allowed. Only JPG, PNG, WEBP");
+            throw new InvalidRequestException("File type not allowed. Only JPG, PNG, WEBP");
 
         String detectedMimeType = tika.detect(file.getInputStream());
         if (!ALLOWED_MIME_TYPES.contains(detectedMimeType))
-            throw new RuntimeException("Invalid file content. Detected: "+detectedMimeType);
+            throw new InvalidRequestException("Invalid file content. Detected: "+detectedMimeType);
 
         String declaredMimeType = file.getContentType();
         if (!ALLOWED_MIME_TYPES.contains(declaredMimeType))
-            throw new RuntimeException("invalid content type header");
+            throw new InvalidRequestException("invalid content type header");
 
         if (!detectedMimeType.equals(declaredMimeType))
-            throw new RuntimeException(
+            throw new InvalidRequestException(
                     "Content type mismatch: declared=" + declaredMimeType
                             + " detected=" + detectedMimeType);
 
@@ -76,7 +78,7 @@ public class FileStorageService {
         Path targetPath = uploadBase.resolve(newFilename).normalize();
 
         if (!targetPath.startsWith(uploadBase))
-            throw new RuntimeException("Path traversal detected");
+            throw new InvalidRequestException("Path traversal detected");
 
         Files.copy(file.getInputStream(),targetPath, StandardCopyOption.REPLACE_EXISTING);
         log.info("file saved securely: {} ", newFilename);
@@ -90,22 +92,22 @@ public class FileStorageService {
             if (filename.contains("..")
                     || filename.contains("/")
                     || filename.contains("\\"))
-                throw new RuntimeException("Invalid filename");
+                throw new InvalidRequestException("Invalid filename");
 
             if (!filename.matches("^[a-f0-9-]{36}\\.(jpg|jpeg|png|webp)$"))
-                throw new RuntimeException("Invalid filename format");
+                throw new InvalidRequestException("Invalid filename format");
             Path uploadBase = Paths.get(uploadDir).toAbsolutePath().normalize();
             Path filePath = uploadBase.resolve(filename).normalize();
             if (!filePath.startsWith(uploadBase))
-                throw new RuntimeException("Path traversal detected");
+                throw new InvalidRequestException("Path traversal detected");
 
             Resource resource = new UrlResource(filePath.toUri());
             if (!resource.exists())
-                throw new RuntimeException("File not Found");
+                throw new ResourceNotFoundException("File not Found");
 
             return resource;
         } catch (Exception e) {
-            throw new RuntimeException("File not found: " + filename);
+            throw new ResourceNotFoundException("File not found: " + filename);
         }
 
     }
@@ -118,7 +120,7 @@ public class FileStorageService {
           Path uploadBase = Paths.get(uploadDir).toAbsolutePath().normalize();
           Path filePath  = uploadBase.resolve(filename).normalize();
           if (!filePath.startsWith(uploadBase))
-              throw new RuntimeException("Path traversal detected on delete");
+              throw new InvalidRequestException("Path traversal detected on delete");
 
           Files.deleteIfExists(filePath);
           log.info("File deleted: {}", filename);
@@ -129,7 +131,7 @@ public class FileStorageService {
     private String getExtension(String filename) {
         int lastDot = filename.lastIndexOf('.');
         if (lastDot == -1 || lastDot == filename.length() -1 )
-            throw new RuntimeException("No file extension found");
+            throw new InvalidRequestException("No file extension found");
 
         String fullExtension  = filename.substring(lastDot).toLowerCase();
         String beforeExtension = filename.substring(0,lastDot).toLowerCase();
@@ -140,7 +142,7 @@ public class FileStorageService {
         );
         for (String dangerous : dangerousExtensions){
             if (beforeExtension.contains(dangerous))
-                throw new RuntimeException("Double extension attack detected");
+                throw new InvalidRequestException("Double extension attack detected");
         }
  return fullExtension;
     }

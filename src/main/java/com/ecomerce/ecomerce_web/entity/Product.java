@@ -27,5 +27,8 @@ public class Product {
     private List<OrderItem>orderItems;
     @Column(nullable = false)
     private boolean active = true;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
 
 }
