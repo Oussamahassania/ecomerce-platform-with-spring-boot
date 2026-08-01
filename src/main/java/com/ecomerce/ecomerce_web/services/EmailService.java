@@ -1,6 +1,7 @@
 package com.ecomerce.ecomerce_web.services;
 
 import com.ecomerce.ecomerce_web.dtos.OrderItemsResponseDto;
+import com.ecomerce.ecomerce_web.entity.Product;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -74,6 +75,18 @@ public class EmailService {
          sendEmail(to, " Order #" + orderId + " Cancelled",
                  "emails/order-canceled", context);
      }
+    @Async("emailExecuter")
+    public void sendLowStockAlert(String to, String fullName, List<Product> lowStockProducts) {
+        if (lowStockProducts.isEmpty()) return;
+
+        Context context = new Context();
+        context.setVariable("fullName", fullName);
+        context.setVariable("products", lowStockProducts);
+        context.setVariable("count", lowStockProducts.size());
+
+        sendEmail(to, "Low Stock Alert - " + lowStockProducts.size() + " products",
+                "emails/low-stock-alert", context);
+    }
     private void sendEmail(
             String to, String subject,
             String template, Context context)

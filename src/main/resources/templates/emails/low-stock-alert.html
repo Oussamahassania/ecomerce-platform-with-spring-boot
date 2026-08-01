@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<p>Hi <span th:text="${fullName}"></span>,</p>
+<h2>Low Stock Alert</h2>
+<p><span th:text="${count}"></span> product(s) are running low on stock:</p>
+<table border="1" cellpadding="8" cellspacing="0">
+    <tr>
+        <th>Product</th>
+        <th>Current Stock</th>
+    </tr>
+    <tr th:each="product : ${products}">
+        <td th:text="${product.name}"></td>
+        <td th:text="${product.stock}"></td>
+    </tr>
+</table>
+</body>
+</html>

@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -20,5 +21,6 @@ public interface UserRepository extends JpaRepository<User,Long> {
     @Transactional
     @Query("DELETE FROM User u WHERE u.emailVerified = false AND u.createdAt < :date")
     int deleteUnverifiedUsers( @Param("date") LocalDateTime date);
+    List<User> findByRole_NameIgnoreCase(String roleName);
 
 }

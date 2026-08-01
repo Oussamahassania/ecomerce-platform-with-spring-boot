@@ -2,6 +2,7 @@ package com.ecomerce.ecomerce_web.controller;
 
 import com.ecomerce.ecomerce_web.dtos.ProductRequestDto;
 import com.ecomerce.ecomerce_web.dtos.ProductResponseDto;
+import com.ecomerce.ecomerce_web.dtos.StockUpdateRequestDto;
 import com.ecomerce.ecomerce_web.services.ProductService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -84,6 +85,18 @@ public class ProductController {
      return ResponseEntity.ok(productService.searchProducts(
              null,minPrice,maxPrice,categoryId,sort,order,page,size
      ));
+    }
+    @PutMapping("/{id}/stock")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ProductResponseDto>updateStock(
+            @PathVariable Long id, @Valid @RequestBody StockUpdateRequestDto requestDto
+    ){
+        return ResponseEntity.ok(productService.updateStock(id,requestDto.getStock()));
+    }
+    @GetMapping("/low-stock")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<ProductResponseDto>>getLowStockProducts(){
+        return ResponseEntity.ok(productService.getLowStockProducts());
     }
 
 }

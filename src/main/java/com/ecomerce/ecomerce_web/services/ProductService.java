@@ -154,4 +154,19 @@ public class ProductService {
 
         product.setCategory(category);
     }
+    @Transactional
+    public ProductResponseDto updateStock(Long productId,Integer newStock){
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: "+productId));
+        product.setStock(newStock);
+        return productMapper.toDto(productRepository.save(product));
+
+    }
+    @Transactional(readOnly = true)
+    public List<ProductResponseDto>getLowStockProducts(){
+        return productRepository.findByStockLessThanAndActiveTrue(10)
+                .stream()
+                .map(productMapper::toDto)
+                .toList();
+    }
 }
