@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body style="font-family: Arial, sans-serif; background:#f4f4f4; padding: 20px;">
+<div style="max-width:600px; margin:auto; background:white;
+            border-radius:8px; padding:30px;">
+
+    <h2 style="color:#3498db;">💰 Refund Processed</h2>
+    <p>Hi <strong th:text="${fullName}"></strong>,</p>
+    <p>Your refund for order
+        <strong th:text="'#' + ${orderId}"></strong>
+        has been processed successfully.</p>
+
+    <div style="background:#f9f9f9; border-radius:8px;
+                padding:20px; margin:20px 0;">
+        <table style="width:100%;">
+            <tr>
+                <td style="color:#666; padding:8px 0;">
+                    Order ID:
+                </td>
+                <td style="font-weight:bold; padding:8px 0;"
+                    th:text="'#' + ${orderId}"></td>
+            </tr>
+            <tr>
+                <td style="color:#666; padding:8px 0;">
+                    Refund Amount:
+                </td>
+                <td style="font-weight:bold; color:#3498db;
+                           font-size:18px; padding:8px 0;"
+                    th:text="'$' + ${amount}"></td>
+            </tr>
+        </table>
+    </div>
+
+    <p>The refunded amount will be returned to your
+        original payment method within
+        <strong>5-7 business days</strong>.</p>
+
+    <div style="background:#3498db; color:white;
+                border-radius:5px; padding:12px;
+                text-align:center; margin:20px 0;">
+        Refund Status: PROCESSED
+    </div>
+
+    <p>Your order has been cancelled and all items
+        have been restocked.</p>
+
+    <p style="color:#999; font-size:12px;">
+        If you have any questions about your refund,
+        please contact our support team.
+        We hope to see you again!
+    </p>
+</div>
+</body>
+</html>

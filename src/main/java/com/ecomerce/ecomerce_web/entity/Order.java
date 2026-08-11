@@ -27,6 +27,13 @@ public class Order {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id",nullable = false)
     private User user;
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
+    private String paymentReference;
+    private LocalDateTime paidAt;
+    @Version
+    @Column(nullable = false)
+    private Long version;
     @PrePersist
     protected void onCreate(){
         orderDate = LocalDateTime.now();

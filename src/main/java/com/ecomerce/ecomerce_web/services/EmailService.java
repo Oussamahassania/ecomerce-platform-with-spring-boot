@@ -110,4 +110,30 @@ public class EmailService {
             log.error(" Failed to send email to {} — {}", to, e.getMessage());
         }
     }
+    @Async("emailExecuter")
+    public void sendPaymentConfirmation(
+            String to,
+            String fullName,
+            Long orderId,
+            BigDecimal amount,
+            String paymentRef) {
+        Context context = new Context();
+        context.setVariable("fullName",fullName);
+        context.setVariable("orderId",orderId);
+        context.setVariable("amount",amount);
+        context.setVariable("paymentRef",paymentRef);
+        sendEmail(to, " Payment Confirmed — Order #" + orderId,
+                "emails/payment-confirmation", context);
+
+    }
+
+    public void sendRefundConfirmation(String to, String fullName,
+                                       Long orderId, BigDecimal amount) {
+        Context context = new Context();
+        context.setVariable("fullName", fullName);
+        context.setVariable("orderId", orderId);
+        context.setVariable("amount", amount);
+        sendEmail(to, " Refund Processed — Order #" + orderId,
+                "emails/refund-confirmation", context);
+    }
 }

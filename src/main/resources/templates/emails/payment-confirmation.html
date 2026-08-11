@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body style="font-family: Arial, sans-serif; background:#f4f4f4; padding: 20px;">
+<div style="max-width:600px; margin:auto; background:white;
+            border-radius:8px; padding:30px;">
+
+    <h2 style="color:#27ae60;">✅ Payment Confirmed!</h2>
+    <p>Hi <strong th:text="${fullName}"></strong>,</p>
+    <p>Your payment for order
+        <strong th:text="'#' + ${orderId}"></strong>
+        has been processed successfully.</p>
+
+    <div style="background:#f9f9f9; border-radius:8px;
+                padding:20px; margin:20px 0;">
+        <table style="width:100%;">
+            <tr>
+                <td style="color:#666; padding:8px 0;">
+                    Payment Reference:
+                </td>
+                <td style="font-weight:bold; padding:8px 0;"
+                    th:text="${paymentRef}"></td>
+            </tr>
+            <tr>
+                <td style="color:#666; padding:8px 0;">
+                    Order ID:
+                </td>
+                <td style="font-weight:bold; padding:8px 0;"
+                    th:text="'#' + ${orderId}"></td>
+            </tr>
+            <tr>
+                <td style="color:#666; padding:8px 0;">
+                    Amount Paid:
+                </td>
+                <td style="font-weight:bold; color:#27ae60;
+                           font-size:18px; padding:8px 0;"
+                    th:text="'$' + ${amount}"></td>
+            </tr>
+        </table>
+    </div>
+
+    <p>Your order is now confirmed and will be
+        processed shortly.</p>
+
+    <div style="background:#27ae60; color:white;
+                border-radius:5px; padding:12px;
+                text-align:center; margin:20px 0;">
+        Payment Status: PAID
+    </div>
+
+    <p style="color:#999; font-size:12px;">
+        Keep this email as your payment receipt.
+        Thank you for shopping with us!
+    </p>
+</div>
+</body>
+</html>
