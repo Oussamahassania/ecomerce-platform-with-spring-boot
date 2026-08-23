@@ -98,7 +98,7 @@ public class ReviewService {
                         "Review not found"));
         boolean isAdmin = userDetails.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority()
-                        .equals("ADMIN"));
+                        .equals("ROLE_ADMIN"));
         if (!isAdmin && !review.getUser().getEmail().equals(userDetails.getUsername())){
             throw new UnauthorizedActionException("You can only delete your own reviews");
         }

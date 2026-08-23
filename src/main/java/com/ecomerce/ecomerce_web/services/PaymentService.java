@@ -29,6 +29,7 @@ public class PaymentService {
     private final ProductRepository productRepository;
     private final EmailService emailService;
     private final PaymentMapper paymentMapper;
+    private final PaymentGateway paymentGateway;
 
     @Transactional
     public PaymentResponseDto processPayment(
@@ -37,6 +38,7 @@ public class PaymentService {
             String idempotencyKey,
             UserDetails userDetails
     ){
+
       if (idempotencyKey!=null){
           var existing = paymentRepository.findByIdempotencyKey(idempotencyKey);
           if (existing.isPresent()) {
@@ -54,7 +56,7 @@ public class PaymentService {
         boolean isAdmin = userDetails.getAuthorities()
                 .stream()
                 .anyMatch(a -> a.getAuthority()
-                        .equals("ADMIN"));
+                        .equals("ROLE_ADMIN"));
         if (!isAdmin && !order.getUser().getEmail().equals(userDetails.getUsername())){
             throw new UnauthorizedActionException("this order does not belong to you");
         }
@@ -77,7 +79,7 @@ public class PaymentService {
                 : UUID.randomUUID().toString());
         payment.setAmount(order.getTotalAmount());
 
-        boolean paymentSuccess = simulatePayment(dto);
+        boolean paymentSuccess = paymentGateway.charge(dto);
         if (paymentSuccess){
             payment.setStatus(PaymentStatus.PAID);
             payment.setProcessedAt(LocalDateTime.now());
@@ -121,7 +123,7 @@ public PaymentResponseDto getPaymentStatus(Long orderId,UserDetails userDetails)
                 );
     boolean isAdmin = userDetails.getAuthorities().stream()
             .anyMatch(a -> a.getAuthority()
-                    .equals("ADMIN"));
+                    .equals("ROLE_ADMIN"));
     if (!isAdmin && !order.getUser().getEmail()
             .equals(userDetails.getUsername()))
         throw new UnauthorizedActionException(
@@ -141,7 +143,7 @@ public PaymentResponseDto refund(Long orderId,UserDetails  userDetails){
                 );
     boolean isAdmin = userDetails.getAuthorities().stream()
             .anyMatch(a -> a.getAuthority()
-                    .equals("ADMIN"));
+                    .equals("ROLE_ADMIN"));
     if (!isAdmin && !order.getUser().getEmail()
             .equals(userDetails.getUsername()))
         throw new UnauthorizedActionException(
@@ -180,7 +182,4 @@ public PaymentResponseDto refund(Long orderId,UserDetails  userDetails){
     return paymentMapper.toDto(refund);
 }
 
-    private boolean simulatePayment(PaymentRequestDto dto) {
-        return Math.random() > 0.1;
-    }
 }

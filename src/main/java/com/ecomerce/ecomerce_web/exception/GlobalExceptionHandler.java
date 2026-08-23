@@ -8,6 +8,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.LocalDateTime;
@@ -67,6 +68,17 @@ public class GlobalExceptionHandler {
         error.setFieldErrors(fieldErrors);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
 
+    }
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingRequestParameter(
+            MissingServletRequestParameterException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                "Required parameter '" + ex.getParameterName() + "' is missing",
+                request
+        );
     }
     // 403 error
     @ExceptionHandler(UnauthorizedActionException.class)
