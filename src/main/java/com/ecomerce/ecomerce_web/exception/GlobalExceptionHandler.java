@@ -16,6 +16,9 @@ import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -41,12 +44,54 @@ public class GlobalExceptionHandler {
     ){
         return buildResponse(HttpStatus.CONFLICT,ex.getMessage(),request);
     }
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ErrorResponse> handleParamValidation(
+            HandlerMethodValidationException ex, HttpServletRequest request
+    ) {
+        Map<String, String> fieldErrors = new HashMap<>();
+        ex.getValueResults().forEach(result -> {
+            String paramName = result.getMethodParameter().getParameterName();
+            result.getResolvableErrors().forEach(error ->
+                    fieldErrors.put(paramName, error.getDefaultMessage()));
+        });
+
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                "Validation failed",
+                request.getRequestURI()
+        );
+        error.setFieldErrors(fieldErrors);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ErrorResponse> handleMissingPart(
+            MissingServletRequestPartException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                "Required part '" + ex.getRequestPartName() + "' is missing",
+                request
+        );
+    }
     // 400 error
     @ExceptionHandler(InvalidRequestException.class)
     public ResponseEntity<ErrorResponse>handleInvalidRequest(
             InvalidRequestException ex,HttpServletRequest request
     ){
         return buildResponse(HttpStatus.BAD_REQUEST,ex.getMessage(),request);
+    }
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleTypeMismatchException(MethodArgumentTypeMismatchException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.BAD_REQUEST.value());
+        body.put("error", "Bad Request");
+        body.put("message", String.format("Invalid value '%s' for parameter '%s'", ex.getValue(), ex.getName()));
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
     // 400 with field errors (bean validation)
     @ExceptionHandler(MethodArgumentNotValidException.class)

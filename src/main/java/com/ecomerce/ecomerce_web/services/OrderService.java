@@ -14,6 +14,7 @@ import com.ecomerce.ecomerce_web.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -27,6 +28,10 @@ public class OrderService {
     private final OrderMapper orderMapper;
     private final  EmailService emailService;
     public OrderResponseDto createOrder(OrderRequestDto dto, UserDetails userDetails){
+        if (dto.getItems() == null || dto.getItems().isEmpty())
+            throw new InvalidRequestException("Order must contain at least one item");
+
+
         boolean isAdmin = userDetails.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
@@ -71,17 +76,20 @@ public class OrderService {
         );
         return response;
     }
+    @Transactional
     public List<OrderResponseDto>getAllOrders(){
         return  orderRepository.findAll()
                 .stream()
                 .map(orderMapper::toDto)
                 .toList();
     }
+    @Transactional(readOnly = true)
     public List<OrderResponseDto> ordersByUser(Long userId){
          return orderRepository.findByUserId(userId)
                  .stream()
                  .map(orderMapper::toDto).toList();
     }
+    @Transactional(readOnly = true)
     public OrderResponseDto getOrderById(Long id, UserDetails userDetails) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order Not Found"));
@@ -96,9 +104,10 @@ public class OrderService {
 
         return orderMapper.toDto(order);
     }
+    @Transactional
     public OrderResponseDto updateOrderStatus(Long orderId,Status status){
         Order order  =  orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order Not Found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Order Not Found"));
         order.setStatus(status);
         OrderResponseDto response =  orderMapper.toDto(orderRepository.save(order));
         emailService.sendOrderStatusUpdate(
@@ -109,6 +118,7 @@ public class OrderService {
         );
         return response;
     }
+    @Transactional
     public OrderResponseDto cancelOrder(Long orderId, UserDetails userDetails) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order Not Found"));
@@ -153,6 +163,7 @@ public class OrderService {
                 .map(Order::getTotalAmount)
                 .reduce(BigDecimal.ZERO,BigDecimal::add);
     }
+    @Transactional(readOnly = true)
     public List<OrderResponseDto>getOrdersByStatus(Status status){
         return orderRepository.findByStatus(status)
                 .stream()

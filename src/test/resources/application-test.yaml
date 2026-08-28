@@ -1,0 +1,35 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    open-in-view: false
+
+  mail:
+    host: localhost
+    port: 3025
+
+  cache:
+    type: simple
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+file:
+  upload-dir: test-uploads/products
+
+jwt:
+  secret: cfc6f9c24ac94defe6b04e67486ef89f9b40910b17c86ad20c6bb9178f30f48c
+  expiration: 3600000
+
+app:
+  base-url: http://localhost:8080

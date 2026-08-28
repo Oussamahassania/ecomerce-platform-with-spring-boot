@@ -10,6 +10,7 @@ import com.ecomerce.ecomerce_web.exception.ResourceNotFoundException;
 import com.ecomerce.ecomerce_web.exception.UnauthorizedActionException;
 import com.ecomerce.ecomerce_web.mapper.OrderItemMapper;
 import com.ecomerce.ecomerce_web.repository.OrderItemRepository;
+import com.ecomerce.ecomerce_web.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,7 @@ class OrderItemServiceTest {
     @Mock private OrderItemRepository orderItemRepository;
     @Mock private OrderItemMapper orderItemMapper;
     @Mock private UserDetails userDetails;
+    @Mock private ProductRepository productRepository;
 
     private OrderItemService orderItemService;
 
@@ -42,7 +44,7 @@ class OrderItemServiceTest {
 
     @BeforeEach
     void setUp() {
-        orderItemService = new OrderItemService(orderItemRepository, orderItemMapper);
+        orderItemService = new OrderItemService(orderItemRepository, orderItemMapper,productRepository);
 
         owner = new User();
         owner.setEmail("owner@test.com");

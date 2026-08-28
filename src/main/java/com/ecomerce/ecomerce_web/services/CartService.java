@@ -77,6 +77,7 @@ public class CartService {
             item.setQuantity(cartItemRequestDto.getQuantity());
             item.setPriceAtAdding(product.getPrice());
             cartItemRepository.save(item);
+            cart.getItems().add(item);
                 }
                 );
         log.info("🛒 [{}] Added product {} to cart",
@@ -127,7 +128,7 @@ public class CartService {
                 .orElseThrow());
 
     }
-    @Transactional(readOnly = true)
+    @Transactional
     public void clearCart(UserDetails userDetails){
         User user = getUser(userDetails);
         Cart cart = getOrCreateCart(user);

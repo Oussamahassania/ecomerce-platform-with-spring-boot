@@ -53,6 +53,7 @@ public class ProductService {
             @CacheEvict(value = "product", key = "#id"),
             @CacheEvict(value = "products", allEntries = true)
     })
+    @Transactional
     public ProductResponseDto updateProduct(ProductRequestDto productDto, Long id) {
 
         Product product = productRepository.findById(id)
@@ -69,6 +70,7 @@ public class ProductService {
     }
 
     @Cacheable(value = "products")
+    @Transactional
     public List<ProductResponseDto> getAll() {
         return productRepository.findByActiveTrue()
                 .stream()
@@ -77,6 +79,7 @@ public class ProductService {
     }
 
     @Cacheable(value = "product", key = "#id")
+    @Transactional(readOnly = true)
     public ProductResponseDto getById(Long id) {
 
         Product product = productRepository.findById(id)

@@ -8,16 +8,20 @@ import com.ecomerce.ecomerce_web.exception.ResourceNotFoundException;
 import com.ecomerce.ecomerce_web.exception.UnauthorizedActionException;
 import com.ecomerce.ecomerce_web.mapper.OrderItemMapper;
 import com.ecomerce.ecomerce_web.repository.OrderItemRepository;
+import com.ecomerce.ecomerce_web.repository.ProductRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 @Service
 @AllArgsConstructor
 public class OrderItemService {
     final private OrderItemRepository orderItemRepository;
     final private OrderItemMapper orderItemMapper;
-
+    final private ProductRepository productRepository;
+    @Transactional(readOnly = true)
     public List<OrderItemsResponseDto> getItemsByOrderId(Long orderId, UserDetails userDetails) {
         List<OrderItem> items = orderItemRepository.findByOrderId(orderId);
         if (items.isEmpty())
@@ -26,7 +30,7 @@ public class OrderItemService {
         checkOwnership(items.get(0).getOrder().getUser().getEmail(), userDetails);  // ← clean
         return items.stream().map(orderItemMapper::toDto).toList();
     }
-
+    @Transactional(readOnly = true)
     public OrderItemsResponseDto getOrderItemById(Long id, UserDetails userDetails) {
         OrderItem orderItem = orderItemRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order Item Not Found"));
@@ -34,33 +38,43 @@ public class OrderItemService {
         checkOwnership(orderItem.getOrder().getUser().getEmail(), userDetails);  // ← clean
         return orderItemMapper.toDto(orderItem);
     }
-
+    @Transactional
     public OrderItemsResponseDto updateQuantity(Long id, Integer quantity, UserDetails userDetails) {
         OrderItem orderItem = orderItemRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order Item Not Found"));
 
-        checkOwnership(orderItem.getOrder().getUser().getEmail(), userDetails);  // ← clean
+        checkOwnership(orderItem.getOrder().getUser().getEmail(), userDetails);
 
         Product product = orderItem.getProduct();
+
         int diff = quantity - orderItem.getQuantity();
-        if (product.getStock() < diff)
-            throw new InvalidRequestException("Stock Is Not Enough For " + product.getName());
+
+        if (diff > 0 && product.getStock() < diff) {
+            throw new InvalidRequestException(
+                    "Stock Is Not Enough For " + product.getName()
+            );
+        }
 
         product.setStock(product.getStock() - diff);
         orderItem.setQuantity(quantity);
         orderItem.setPrice(product.getPrice());
-        return orderItemMapper.toDto(orderItemRepository.save(orderItem));
-    }
 
+        productRepository.save(product);
+        OrderItem savedItem = orderItemRepository.save(orderItem);
+
+        return orderItemMapper.toDto(savedItem);
+    }
+    @Transactional
     public void removeOrderItem(Long id, UserDetails userDetails) {
         OrderItem orderItem = orderItemRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order Item Not Found"));
 
         checkOwnership(orderItem.getOrder().getUser().getEmail(), userDetails);  // ← clean
-
         Product product = orderItem.getProduct();
-        product.setStock(product.getStock() + orderItem.getQuantity());
         orderItemRepository.delete(orderItem);
+        product.setStock(product.getStock() + orderItem.getQuantity());
+        productRepository.save(product);
+
     }
 
     private void checkOwnership(String ownerEmail, UserDetails userDetails) {
