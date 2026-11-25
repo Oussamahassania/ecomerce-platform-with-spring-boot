@@ -19,7 +19,7 @@ import java.util.Map;
 
 @Configuration
 @EnableCaching
-@Profile("!test")
+@Profile("!test & !dev")
 public class CacheConfig {
 
     @Bean

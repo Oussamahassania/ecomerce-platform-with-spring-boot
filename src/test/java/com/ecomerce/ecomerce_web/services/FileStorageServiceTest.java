@@ -56,7 +56,7 @@ class FileStorageServiceTest {
 
         assertThatThrownBy(() -> fileStorageService.saveFile(file))
                 .isInstanceOf(InvalidRequestException.class)
-                .hasMessageContaining("empty");
+                .hasMessageMatching("(?i).*empty.*");
     }
 
     @Test

@@ -6,6 +6,10 @@ import com.ecomerce.ecomerce_web.dtos.LoginRequest;
 import com.ecomerce.ecomerce_web.dtos.UserRequestDto;
 import com.ecomerce.ecomerce_web.entity.Role;
 import com.ecomerce.ecomerce_web.entity.User;
+import com.ecomerce.ecomerce_web.repository.CartRepository;
+import com.ecomerce.ecomerce_web.repository.OrderRepository;
+import com.ecomerce.ecomerce_web.repository.PaymentRepository;
+import com.ecomerce.ecomerce_web.repository.ReviewRepository;
 import com.ecomerce.ecomerce_web.repository.RoleRepository;
 import com.ecomerce.ecomerce_web.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +51,18 @@ class UserIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
+    private PaymentRepository paymentRepository;
+
+    @Autowired
+    private ReviewRepository reviewRepository;
+
+    @Autowired
+    private CartRepository cartRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     private String adminToken;
@@ -54,6 +70,10 @@ class UserIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        paymentRepository.deleteAll();
+        reviewRepository.deleteAll();
+        orderRepository.deleteAll();
+        cartRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
 

@@ -84,6 +84,15 @@ public class OrderService {
                 .toList();
     }
     @Transactional(readOnly = true)
+    public List<OrderResponseDto> getMyOrders(UserDetails userDetails){
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new ResourceNotFoundException("User Not Found"));
+        return orderRepository.findByUserIdOrderByOrderDateDesc(user.getId())
+                .stream()
+                .map(orderMapper::toDto)
+                .toList();
+    }
+    @Transactional(readOnly = true)
     public List<OrderResponseDto> ordersByUser(Long userId){
          return orderRepository.findByUserId(userId)
                  .stream()

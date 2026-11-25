@@ -41,7 +41,7 @@ class OrderItemControllerTest {
 
     @BeforeEach
     void setUp() {
-        itemResponse = new OrderItemsResponseDto(2, BigDecimal.valueOf(500), 1L);
+        itemResponse = new OrderItemsResponseDto(2, BigDecimal.valueOf(500), 1L, null, null);
     }
 
     @Nested

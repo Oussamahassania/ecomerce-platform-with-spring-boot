@@ -34,7 +34,7 @@ public class EmailService {
         context.setVariable("fullName",fullName);
         context.setVariable(
                 "verificationUrl",
-                baseUrl + "/api/auth/verifiy?token=" + token
+                baseUrl + "/verify?token=" + token
         );
 
         sendEmail(to," Verify Your Email — EcommerceWeb",

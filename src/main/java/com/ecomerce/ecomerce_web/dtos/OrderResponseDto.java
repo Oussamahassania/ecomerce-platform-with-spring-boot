@@ -1,5 +1,6 @@
 package com.ecomerce.ecomerce_web.dtos;
 
+import com.ecomerce.ecomerce_web.entity.PaymentStatus;
 import com.ecomerce.ecomerce_web.entity.Status;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,5 +19,7 @@ public class OrderResponseDto {
   private Status status;
   private LocalDateTime orderDate;
   private BigDecimal totalAmount;
+  private PaymentStatus paymentStatus;
+  private String paymentReference;
   private List<OrderItemsResponseDto> items;
 }

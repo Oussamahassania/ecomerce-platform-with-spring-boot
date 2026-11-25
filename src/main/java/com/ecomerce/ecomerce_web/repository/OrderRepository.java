@@ -13,6 +13,7 @@ import java.util.List;
 @Repository
 public interface OrderRepository extends JpaRepository<Order,Long> {
     List<Order>findByUserId(Long userId);
+    List<Order>findByUserIdOrderByOrderDateDesc(Long userId);
     List<Order>findByStatus(Status status);
     @Query("SELECT o FROM Order o WHERE o.status = 'PENDING' AND o.orderDate < :date")
     List<Order>findOldPendingOrders(@Param("date") LocalDateTime date);

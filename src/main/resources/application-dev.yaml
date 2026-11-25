@@ -1,0 +1,44 @@
+# Local development profile: zero external services required.
+# Run with:  ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/forma;MODE=PostgreSQL;AUTO_SERVER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    show-sql: false
+
+  cache:
+    type: simple
+
+  mail:
+    host: localhost
+    port: 3025
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+file:
+  upload-dir: uploads/products
+
+jwt:
+  secret: cfc6f9c24ac94defe6b04e67486ef89f9b40910b17c86ad20c6bb9178f30f48c
+  expiration: 86400000
+
+app:
+  base-url: http://localhost:5173
+  cors:
+    allowed-origins: http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173
+
+logging:
+  level:
+    com.ecomerce.ecomerce_web: INFO
+    org.springframework.security: WARN

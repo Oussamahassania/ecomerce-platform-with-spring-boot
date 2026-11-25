@@ -62,6 +62,9 @@ public class ProductController {
     @GetMapping("/search")
     public ResponseEntity<Page<ProductResponseDto>> searchProducts(
             @RequestParam(required = false) String name,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String sort,
             @RequestParam(defaultValue = "ASC") String order,
             @RequestParam(defaultValue = "0") int page,
@@ -69,7 +72,7 @@ public class ProductController {
 
     ){
         return ResponseEntity.ok(productService.searchProducts(
-                name,null,null,null,sort,order,page,size
+                name,minPrice,maxPrice,categoryId,sort,order,page,size
         ));
     }
     @GetMapping("/filter")

@@ -27,6 +27,12 @@ public class OrderController {
     ) {
         return ResponseEntity.ok(orderService.createOrder(dto, userDetails));
     }
+    @GetMapping("/my-orders")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<List<OrderResponseDto>> getMyOrders(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(orderService.getMyOrders(userDetails));
+    }
     @GetMapping("/AllOrders")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<OrderResponseDto>> getAllOrders(){

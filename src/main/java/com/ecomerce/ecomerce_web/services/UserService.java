@@ -12,6 +12,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -45,6 +46,10 @@ public class UserService {
         userMapper.updateEntity(userDto, user);
         user.setPassword(passwordEncoder.encode(userDto.getPassword()));
         return userMapper.toDto(userRepository.save(user));
+    }
+    public UserResponseDto getCurrentUser(UserDetails userDetails) {
+        return userMapper.toDto(userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new ResourceNotFoundException("User Not found")));
     }
     @Cacheable(value = "user",key = "#id")
     public UserResponseDto getById(Long id) {
